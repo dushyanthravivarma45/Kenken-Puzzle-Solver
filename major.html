@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KenKen Puzzle Solver</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1f2937;
+            color: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: start;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #10b981;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        input, select, button {
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        input[type="number"] {
+            width: 80px;
+        }
+        button {
+            background-color: #3b82f6;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        #grid {
+            display: grid;
+            gap: 2px;
+            margin-bottom: 20px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: #374151;
+            text-align: center;
+            font-size: 1.1rem;
+            border-radius: 4px;
+        }
+        .steps {
+            background: #111827;
+            padding: 15px;
+            width: 100%;
+            max-width: 600px;
+            height: 200px;
+            overflow-y: auto;
+            border-radius: 8px;
+        }
+        @media (max-width: 600px) {
+            .cell {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>KenKen Puzzle Solver</h1>
+    <div class="controls">
+        <input type="number" id="size" placeholder="Grid Size" min="3" max="6">
+        <button onclick="createGrid()">Create Grid</button>
+        <button onclick="solveKenKen()">Solve</button>
+    </div>
+    <div id="grid"></div>
+    <div class="steps" id="steps"></div>
+
+    <script>
+        let size = 0;
+        let grid = [];
+
+        function createGrid() {
+            size = parseInt(document.getElementById('size').value);
+            const gridContainer = document.getElementById('grid');
+            gridContainer.innerHTML = '';
+            gridContainer.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            grid = [];
+            for (let i = 0; i < size; i++) {
+                grid.push([]);
+                for (let j = 0; j < size; j++) {
+                    const input = document.createElement('input');
+                    input.classList.add('cell');
+                    input.type = 'text';
+                    input.maxLength = 1;
+                    input.dataset.row = i;
+                    input.dataset.col = j;
+                    gridContainer.appendChild(input);
+                    grid[i].push(input);
+                }
+            }
+            document.getElementById('steps').innerHTML = '';
+        }
+
+        function logStep(text) {
+            const stepBox = document.getElementById('steps');
+            const p = document.createElement('p');
+            p.textContent = text;
+            stepBox.appendChild(p);
+            stepBox.scrollTop = stepBox.scrollHeight;
+        }
+
+        function isSafe(gridValues, row, col, num) {
+            for (let x = 0; x < size; x++) {
+                if (gridValues[row][x] === num || gridValues[x][col] === num)
+                    return false;
+            }
+            return true;
+        }
+
+        function solve(gridValues, row, col) {
+            if (row === size) return true;
+            let nextRow = col === size - 1 ? row + 1 : row;
+            let nextCol = col === size - 1 ? 0 : col + 1;
+            for (let num = 1; num <= size; num++) {
+                if (isSafe(gridValues, row, col, num)) {
+                    gridValues[row][col] = num;
+                    logStep(`Placed ${num} at (${row + 1}, ${col + 1})`);
+                    if (solve(gridValues, nextRow, nextCol)) return true;
+                    gridValues[row][col] = 0;
+                    logStep(`Backtracked from (${row + 1}, ${col + 1})`);
+                }
+            }
+            return false;
+        }
+
+        function solveKenKen() {
+            if (!size) return;
+            const gridValues = Array.from({ length: size }, () => Array(size).fill(0));
+            if (solve(gridValues, 0, 0)) {
+                for (let i = 0; i < size; i++) {
+                    for (let j = 0; j < size; j++) {
+                        grid[i][j].value = gridValues[i][j];
+                    }
+                }
+                logStep('Puzzle solved successfully!');
+            } else {
+                logStep('No solution found.');
+            }
+        }
+    </script>
+</body>
+</html>
